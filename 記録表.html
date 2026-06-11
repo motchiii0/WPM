@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-K4N92SNK0N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-K4N92SNK0N');
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WPM Calculator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Serif JP', 'Yu Mincho', 'YuMincho', '游明朝', 'Hiragino Mincho ProN', serif;
+    background: #ffffff;
+    color: #000000;
+    min-height: 100vh;
+    padding: 56px 24px 80px;
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ========= SHARED ========= */
+  .btn-text {
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: #000000;
+    background: none;
+    border: none;
+    border-bottom: 1px solid #000000;
+    cursor: pointer;
+    padding: 2px 0;
+    white-space: nowrap;
+  }
+
+  /* ========= SELECTION VIEW ========= */
+  .sel-header {
+    max-width: 540px;
+    margin: 0 auto 48px;
+    border-bottom: 1px solid #000000;
+    padding-bottom: 20px;
+  }
+  .sel-header h1 {
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .sel-list {
+    max-width: 540px;
+    margin: 0 auto;
+  }
+
+  .sel-item {
+    border-bottom: 1px solid #000000;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+  }
+
+  .sel-item-name {
+    flex: 1;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    color: #000000;
+    text-align: left;
+    padding: 0;
+  }
+
+  .sel-delete-btn {
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: #000000;
+    background: none;
+    border: none;
+    border-bottom: 1px solid #000000;
+    cursor: pointer;
+    padding: 2px 0;
+    flex-shrink: 0;
+  }
+
+  .sel-new {
+    max-width: 540px;
+    margin: 32px auto 0;
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+    border-bottom: 1px solid #000000;
+    padding-bottom: 16px;
+  }
+
+  .sel-new-input {
+    font-family: inherit;
+    font-size: 15px;
+    color: #000000;
+    background: #ffffff;
+    border: none;
+    border-bottom: 1px solid #000000;
+    outline: none;
+    flex: 1;
+    padding: 2px 0;
+    letter-spacing: 0.05em;
+  }
+  .sel-new-input::placeholder { color: #000000; }
+
+  /* delete confirm overlay */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #ffffff;
+    z-index: 100;
+    padding: 56px 24px;
+  }
+  .overlay.active { display: block; }
+
+  .overlay-inner {
+    max-width: 540px;
+    margin: 0 auto;
+  }
+  .overlay-inner h2 {
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    margin-bottom: 32px;
+    border-bottom: 1px solid #000000;
+    padding-bottom: 20px;
+  }
+  .overlay-inner p {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+  }
+  .overlay-confirm-input {
+    font-family: inherit;
+    font-size: 15px;
+    color: #000000;
+    background: #ffffff;
+    border: none;
+    border-bottom: 1px solid #000000;
+    outline: none;
+    width: 100%;
+    padding: 4px 0;
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
+  }
+  .overlay-confirm-input::placeholder { color: #000000; }
+  .overlay-actions {
+    display: flex;
+    gap: 24px;
+    justify-content: flex-end;
+  }
+
+  /* ========= CALC VIEW ========= */
+  .page-header {
+    max-width: 780px;
+    margin: 0 auto 48px;
+    border-bottom: 1px solid #000000;
+    padding-bottom: 20px;
+  }
+
+  .material-name-display {
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+  }
+
+  .container { max-width: 780px; margin: 0 auto; }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead th {
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #000000;
+    padding: 0 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #000000;
+  }
+  thead th.num { width: 52px; text-align: center; }
+  thead th.wpm-col { text-align: right; width: 100px; }
+
+  tbody tr { border-bottom: 1px solid #000000; }
+
+  td { padding: 10px 8px; vertical-align: middle; }
+  td.num { text-align: center; font-size: 11px; letter-spacing: 0.05em; width: 52px; }
+
+  input[type="number"] {
+    font-family: inherit;
+    font-size: 13px;
+    color: #000000;
+    background: #ffffff;
+    border: none;
+    border-bottom: 1px solid #000000;
+    padding: 2px 4px;
+    width: 100%;
+    outline: none;
+    -moz-appearance: textfield;
+    text-align: center;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type="number"]::placeholder { color: #000000; font-size: 12px; }
+
+  td.words-col { width: 140px; }
+  td.min-col   { width: 100px; }
+  td.sec-col   { width: 100px; }
+  td.wpm-col   { text-align: right; width: 100px; padding-right: 4px; }
+
+  .wpm-value {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: #000000;
+    min-width: 60px;
+    display: inline-block;
+    text-align: right;
+  }
+  .wpm-unit { font-size: 10px; letter-spacing: 0.1em; margin-left: 2px; }
+  .wpm-empty { font-size: 13px; }
+
+  .summary {
+    max-width: 780px;
+    margin: 0 auto;
+    border-top: 1px solid #000000;
+    display: flex;
+    gap: 48px;
+    padding-top: 24px;
+  }
+  .summary-item { display: flex; flex-direction: column; gap: 6px; }
+  .summary-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; }
+  .summary-value { font-size: 28px; font-weight: 500; letter-spacing: 0.04em; }
+  .summary-value .unit { font-size: 11px; font-weight: 400; letter-spacing: 0.1em; margin-left: 3px; }
+
+  .bottom-row {
+    max-width: 780px;
+    margin: 32px auto 0;
+    display: flex;
+    justify-content: flex-end;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== SELECTION VIEW ===== -->
+<div class="view active" id="viewSelect">
+  <div class="sel-header">
+    <h1>WPM</h1>
+  </div>
+
+  <div class="sel-list" id="selList"></div>
+
+  <div class="sel-new">
+    <input class="sel-new-input" type="text" id="newMaterialInput" placeholder="新しい教材名">
+    <button class="btn-text" onclick="createMaterial()">新規作成</button>
+  </div>
+</div>
+
+<!-- ===== DELETE CONFIRM OVERLAY ===== -->
+<div class="overlay" id="deleteOverlay">
+  <div class="overlay-inner">
+    <h2 id="deleteTitle"></h2>
+    <p>削除するには「削除」と入力してください。</p>
+    <input class="overlay-confirm-input" type="text" id="deleteConfirmInput" placeholder="削除">
+    <div class="overlay-actions">
+      <button class="btn-text" onclick="cancelDelete()">キャンセル</button>
+      <button class="btn-text" onclick="confirmDelete()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RENAME OVERLAY ===== -->
+<div class="overlay" id="renameOverlay">
+  <div class="overlay-inner">
+    <h2>教材名を変更</h2>
+    <p>新しい教材名を入力してください。</p>
+    <input class="overlay-confirm-input" type="text" id="renameInput" placeholder="新しい教材名">
+    <div class="overlay-actions">
+      <button class="btn-text" onclick="cancelRename()">キャンセル</button>
+      <button class="btn-text" onclick="confirmRename()">変更する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CALC VIEW ===== -->
+<div class="view" id="viewCalc">
+  <div class="page-header" style="display:flex;align-items:baseline;gap:20px;">
+    <div class="material-name-display" id="materialNameDisplay" style="flex:1;"></div>
+    <button class="btn-text" onclick="startRename()">名前変更</button>
+  </div>
+
+  <div class="container">
+    <table id="wpmTable">
+      <thead>
+        <tr>
+          <th class="num">No.</th>
+          <th>語数</th>
+          <th>分</th>
+          <th>秒</th>
+          <th class="wpm-col">WPM</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="summary">
+    <div class="summary-item">
+      <span class="summary-label">平均</span>
+      <span class="summary-value" id="avgVal">—</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">最高</span>
+      <span class="summary-value" id="bestVal">—</span>
+    </div>
+  </div>
+
+  <div class="bottom-row">
+    <button class="btn-text" onclick="goToSelect()">教材一覧に戻る</button>
+  </div>
+</div>
+
+<script>
+  const wpmResults = {};
+  let currentMaterial = null;
+  let pendingDeleteName = null;
+
+  // ===== STORAGE =====
+  function getAll() {
+    try { return JSON.parse(localStorage.getItem('wpm_data')) || {}; }
+    catch(e) { return {}; }
+  }
+  function saveAll(data) {
+    localStorage.setItem('wpm_data', JSON.stringify(data));
+  }
+
+  // ===== BUILD TABLE =====
+  const tbody = document.getElementById('tableBody');
+  for (let i = 1; i <= 20; i++) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="num">${String(i).padStart(2,'0')}</td>
+      <td class="words-col"><input type="number" min="0" placeholder="—" id="w${i}" oninput="calc(${i})"></td>
+      <td class="min-col"><input type="number" min="0" placeholder="—" id="m${i}" oninput="calc(${i})"></td>
+      <td class="sec-col"><input type="number" min="0" max="59" placeholder="—" id="s${i}" oninput="calc(${i})"></td>
+      <td class="wpm-col"><span class="wpm-value wpm-empty" id="r${i}">—</span><span class="wpm-unit" id="u${i}" style="display:none">wpm</span></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  // ===== CALC =====
+  function calc(i) {
+    const w = parseFloat(document.getElementById('w'+i).value);
+    const m = parseFloat(document.getElementById('m'+i).value) || 0;
+    const s = parseFloat(document.getElementById('s'+i).value) || 0;
+    const result = document.getElementById('r'+i);
+    const unit   = document.getElementById('u'+i);
+    const totalMin = m + s / 60;
+
+    if (!isNaN(w) && w > 0 && totalMin > 0) {
+      const wpm = Math.round(w / totalMin);
+      wpmResults[i] = wpm;
+      result.textContent = wpm.toLocaleString();
+      result.classList.remove('wpm-empty');
+      unit.style.display = 'inline';
+    } else {
+      delete wpmResults[i];
+      result.textContent = '—';
+      result.classList.add('wpm-empty');
+      unit.style.display = 'none';
+    }
+    updateSummary();
+    saveCurrent();
+  }
+
+  function updateSummary() {
+    const values = Object.values(wpmResults);
+    const avgEl  = document.getElementById('avgVal');
+    const bestEl = document.getElementById('bestVal');
+    if (values.length === 0) {
+      avgEl.innerHTML = '—'; bestEl.innerHTML = '—'; return;
+    }
+    const avg  = Math.round(values.reduce((a,b) => a+b, 0) / values.length);
+    const best = Math.max(...values);
+    avgEl.innerHTML  = `${avg.toLocaleString()}<span class="unit">wpm</span>`;
+    bestEl.innerHTML = `${best.toLocaleString()}<span class="unit">wpm</span>`;
+  }
+
+  // ===== SAVE CURRENT =====
+  function saveCurrent() {
+    if (!currentMaterial) return;
+    const rows = {};
+    for (let i = 1; i <= 20; i++) {
+      rows[i] = {
+        w: document.getElementById('w'+i).value,
+        m: document.getElementById('m'+i).value,
+        s: document.getElementById('s'+i).value,
+      };
+    }
+    const data = getAll();
+    data[currentMaterial] = rows;
+    saveAll(data);
+  }
+
+  // ===== LOAD MATERIAL =====
+  function loadMaterial(name) {
+    currentMaterial = name;
+    document.getElementById('materialNameDisplay').textContent = name;
+
+    // clear
+    for (let i = 1; i <= 20; i++) {
+      document.getElementById('w'+i).value = '';
+      document.getElementById('m'+i).value = '';
+      document.getElementById('s'+i).value = '';
+      delete wpmResults[i];
+      document.getElementById('r'+i).textContent = '—';
+      document.getElementById('r'+i).classList.add('wpm-empty');
+      document.getElementById('u'+i).style.display = 'none';
+    }
+    document.getElementById('avgVal').innerHTML = '—';
+    document.getElementById('bestVal').innerHTML = '—';
+
+    const data = getAll();
+    if (data[name]) {
+      const rows = data[name];
+      for (let i = 1; i <= 20; i++) {
+        if (!rows[i]) continue;
+        document.getElementById('w'+i).value = rows[i].w || '';
+        document.getElementById('m'+i).value = rows[i].m || '';
+        document.getElementById('s'+i).value = rows[i].s || '';
+        calc(i);
+      }
+    }
+
+    document.getElementById('viewSelect').classList.remove('active');
+    document.getElementById('viewCalc').classList.add('active');
+  }
+
+  // ===== SELECTION VIEW =====
+  function renderSelList() {
+    const data = getAll();
+    const names = Object.keys(data);
+    const list = document.getElementById('selList');
+    list.innerHTML = '';
+
+    if (names.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'font-size:12px;letter-spacing:0.1em;padding:16px 0;border-bottom:1px solid #000;';
+      empty.textContent = '教材がありません。新規作成してください。';
+      list.appendChild(empty);
+      return;
+    }
+
+    names.forEach(name => {
+      const item = document.createElement('div');
+      item.className = 'sel-item';
+      item.innerHTML = `
+        <button class="sel-item-name" onclick="loadMaterial('${escapeName(name)}')">${name}</button>
+        <button class="sel-delete-btn" onclick="startDelete('${escapeName(name)}')">削除</button>
+      `;
+      list.appendChild(item);
+    });
+  }
+
+  function escapeName(name) {
+    return name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  }
+
+  function createMaterial() {
+    const input = document.getElementById('newMaterialInput');
+    const name = input.value.trim();
+    if (!name) return;
+    const data = getAll();
+    if (!data[name]) { data[name] = {}; saveAll(data); }
+    input.value = '';
+    loadMaterial(name);
+  }
+
+  document.getElementById('newMaterialInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') createMaterial();
+  });
+
+  // ===== DELETE =====
+  function startDelete(escapedName) {
+    const data = getAll();
+    const realName = Object.keys(data).find(k => escapeName(k) === escapedName) || escapedName;
+    pendingDeleteName = realName;
+    document.getElementById('deleteTitle').textContent = `「${realName}」を削除しますか？`;
+    document.getElementById('deleteConfirmInput').value = '';
+    document.getElementById('deleteOverlay').classList.add('active');
+  }
+
+  function cancelDelete() {
+    pendingDeleteName = null;
+    document.getElementById('deleteOverlay').classList.remove('active');
+  }
+
+  function confirmDelete() {
+    const val = document.getElementById('deleteConfirmInput').value.trim();
+    if (val !== '削除') { alert('「削除」と入力してください。'); return; }
+    const data = getAll();
+    delete data[pendingDeleteName];
+    saveAll(data);
+    pendingDeleteName = null;
+    document.getElementById('deleteOverlay').classList.remove('active');
+    renderSelList();
+  }
+
+  // ===== RENAME =====
+  function startRename() {
+    const input = document.getElementById('renameInput');
+    input.value = currentMaterial;
+    document.getElementById('renameOverlay').classList.add('active');
+    setTimeout(() => input.focus(), 50);
+  }
+
+  function cancelRename() {
+    document.getElementById('renameOverlay').classList.remove('active');
+  }
+
+  function confirmRename() {
+    const newName = document.getElementById('renameInput').value.trim();
+    if (!newName) { alert('教材名を入力してください。'); return; }
+    if (newName === currentMaterial) { cancelRename(); return; }
+    const data = getAll();
+    if (data[newName]) { alert('同じ名前の教材がすでに存在します。'); return; }
+    data[newName] = data[currentMaterial];
+    delete data[currentMaterial];
+    saveAll(data);
+    currentMaterial = newName;
+    document.getElementById('materialNameDisplay').textContent = newName;
+    document.getElementById('renameOverlay').classList.remove('active');
+  }
+
+  document.getElementById('renameInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') confirmRename();
+  });
+
+  // ===== NAVIGATE =====
+  function goToSelect() {
+    saveCurrent();
+    currentMaterial = null;
+    document.getElementById('viewCalc').classList.remove('active');
+    document.getElementById('viewSelect').classList.add('active');
+    renderSelList();
+  }
+
+  // ===== INIT =====
+  renderSelList();
+</script>
+</body>
+</html>
